@@ -16,7 +16,7 @@ fn main() {
     let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
     let mut old_pixel: u8;
     let mut new_pixel: u8;
-    let mut quant_error: i32;
+    let mut quant_error: f32;
     let mut result: f32;
 
     // Gets the width and height to prevent crashes due to out of bounds pixels
@@ -34,30 +34,30 @@ fn main() {
 
         buffer.put_pixel(imgx, imgy, Luma([new_pixel]));
 
-        quant_error = old_pixel as i32 - new_pixel as i32;
+        quant_error = old_pixel as f32 - new_pixel as f32;
         
         // Error diffusion
         if imgx + 1 < width {
 
-            result = buffer.get_pixel(imgx + 1, imgy)[0] as f32 + (quant_error as f32 * 0.4375);
+            result = buffer.get_pixel(imgx + 1, imgy)[0] as f32 + (quant_error * 0.4375);
             if result > 255.0 { result = 255.0 };
             buffer.put_pixel(imgx + 1, imgy, Luma([result as u8])); // 7
 
             if imgy < height {
-                result = buffer.get_pixel(imgx + 1, imgy + 1 )[0] as f32 + (quant_error as f32 * 0.0625);
+                result = buffer.get_pixel(imgx + 1, imgy + 1 )[0] as f32 + (quant_error * 0.0625);
                 if result > 255.0 { result = 255.0 };
                 buffer.put_pixel(imgx + 1, imgy + 1, Luma([result as u8])); // 1
             }
         };
     
         if imgx != 0 && imgy < height {
-            result = buffer.get_pixel(imgx - 1, imgy + 1 )[0] as f32 + (quant_error as f32 * 0.3125);
+            result = buffer.get_pixel(imgx - 1, imgy + 1 )[0] as f32 + (quant_error * 0.3125);
             if result > 255.0 { result = 255.0 };
             buffer.put_pixel(imgx - 1, imgy + 1, Luma([result as u8])); // 5
         };
     
         if imgy < height {
-            result = buffer.get_pixel(imgx, imgy + 1 )[0] as f32 + (quant_error as f32 * 0.1875);
+            result = buffer.get_pixel(imgx, imgy + 1 )[0] as f32 + (quant_error * 0.1875);
             if result > 255.0 { result = 255.0 };
             buffer.put_pixel(imgx, imgy + 1, Luma([result as u8])); // 3
         };
