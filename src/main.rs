@@ -3,8 +3,16 @@ use image::{Luma, GenericImageView, ImageBuffer};
 
 
 fn main() {
+    // CLI stuff
     let args: Vec<String> = env::args().collect();
     let img = image::open(&args[1]).unwrap();
+    let options = &args[2];
+    let mut name = "out.png";
+
+    if options.contains('o') {
+        name = &args[3];
+    }
+
     let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
     let mut old_pixel: u8;
     let mut new_pixel: u8;
@@ -56,5 +64,5 @@ fn main() {
 
     };
 
-    buffer.save("test.png").unwrap();
+    buffer.save(name).unwrap();
 }
