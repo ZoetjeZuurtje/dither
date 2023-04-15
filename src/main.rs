@@ -10,7 +10,7 @@ fn main() {
     let mut name = "out.png";
 
     if options.contains('o') {
-        name = &args[3];
+        name = &args[2];
     }
 
     let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
