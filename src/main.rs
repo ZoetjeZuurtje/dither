@@ -6,7 +6,7 @@ fn main() {
     // CLI stuff
     let args: Vec<String> = env::args().collect();
     let img = image::open(&args[1]).unwrap();
-    let options = &args[2];
+    let options = &args[1];
     let mut name = "out.png";
 
     if options.contains('o') {
@@ -26,7 +26,7 @@ fn main() {
     // Iterate over the pixels
     for (imgx, imgy, _) in img.pixels() {
 
-        // Floyd-Steinberg dithering
+        // Floyd-Steinberg dithering!
         old_pixel = buffer.get_pixel(imgx, imgy)[0];
         new_pixel = 0;
         
