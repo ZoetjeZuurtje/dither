@@ -1,6 +1,5 @@
 mod dithering;
 use std::env;
-
 use image::DynamicImage;
 
 
@@ -8,7 +7,10 @@ fn main() {
     // CLI stuff
     let args: Vec<String> = env::args().collect();
     let img: DynamicImage;
-    let options = &args[2];
+    let options = match args.get(2) {
+        Some(string) => string,
+        None => ""
+    };
     let mut name = "out.png";
 
     match image::open(&args[1]) {
