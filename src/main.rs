@@ -1,27 +1,25 @@
 mod dithering;
-use std::env;
+mod cli;
+use cli::get_options;
 use image::DynamicImage;
 
 
 fn main() {
-    // CLI stuff
-    let args: Vec<String> = env::args().collect();
-    let img: DynamicImage;
-    let options = match args.get(2) {
-        Some(string) => string,
-        None => ""
-    };
-    let mut name = "./test/result/out.png";
 
-    match image::open(&args[1]) {
+    let settings = get_options();
+    println!("{:#?}", settings.file_path_in);
+    println!("{:#?}", settings.file_path_out);
+
+    let img: DynamicImage;
+
+    match image::open(settings.file_path_in) {
         Result::Ok(image) => img = image,
-        Result::Err(error) => panic!("Error: {}", error),
-    };
-    if options.contains('o') {
-        name = &args[3];
+        Result::Err(_) => {
+            panic!("\nCould not open file.\nCheck if the file path is correct and if you have the appropriate priviliges.");
+        }
     };
     
     let buffer = dithering::floyd_steinberg(&img);
 
-    buffer.save(name).unwrap();
+    buffer.save(settings.file_path_out).unwrap();
 }
