@@ -1,45 +1,86 @@
 use image::{Luma, DynamicImage, GenericImageView, ImageBuffer};
 
 
-fn error_diffusion(buffer: &mut ImageBuffer<Luma<u8>, Vec<u8>>, x: u32, y: u32, err: f32) {
+fn calculate_err(error_value: f32, weight: usize) -> i16 {
 
-    let pixel = match buffer.get_pixel_checked(x, y) {
-        Some(pixel) => pixel[0],
-        None => return,
-    };
-    if err + pixel as f32 > 255.0 {
-        buffer.put_pixel(x, y, Luma([255]));
-        return;
+    // Approximations for:
+    //   .     *   7/16
+    // 3/16  5/16  1/16
+    const ERR_DIFF: [f32;4] = [0.4375, 0.1875, 0.3125, 0.0625];
+
+    let weighted_error = error_value * ERR_DIFF[weight];
+
+    return weighted_error.floor() as i16;
+
+}
+
+fn error_diffusion(buffer: &mut ImageBuffer<Luma<u8>, Vec<u8>>, x: [u32;4], y: [u32;4], err: f32) {
+    let mut adjusted_pixel_value;
+    let mut i: usize  = 0;
+    while i < 4 {
+
+        if i == 3 && x[i] == 0 {
+            i += 1;
+            continue;
+        }
+
+        let pixel = match buffer.get_pixel_checked(x[i], y[i]) {
+            Some(pixel) => pixel[0],
+            None => {
+                i += 1;
+                continue;
+                }
+        };
+
+        let weighted_err = calculate_err(err, i);
+
+        adjusted_pixel_value = weighted_err + pixel as i16;
+
+        if adjusted_pixel_value > 255 {
+            adjusted_pixel_value = 255;
+        } else if adjusted_pixel_value < 0 {
+            adjusted_pixel_value = 0;
+        };
+        
+        buffer.put_pixel(x[i], y[i], Luma([adjusted_pixel_value as u8]));
+
+        i += 1;
     }
-    let pixel: Luma<u8> = Luma([pixel + err as u8]);
-    buffer.put_pixel(x, y, pixel);
 }
 
 // Floyd-Steinberg dithering!
 pub fn floyd_steinberg(img: &DynamicImage) -> ImageBuffer<Luma<u8>, Vec<u8>> {
     let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
-    let mut old_pixel: u8;
-    let mut new_pixel: u8;
     let mut quant_error: f32;
 
     // Iterate over the pixels
     for (imgx, imgy, _) in img.pixels() {
 
-        old_pixel = buffer.get_pixel(imgx, imgy)[0];
-        new_pixel = 0;
-        if old_pixel > 127 { new_pixel = 255 };
+        let old_pixel = buffer.get_pixel(imgx, imgy)[0];
+        let new_pixel = if old_pixel > 127 {
+            255
+        } else {
+            0
+        };
 
         buffer.put_pixel(imgx, imgy, Luma([new_pixel]));
-
         quant_error = old_pixel as f32 - new_pixel as f32;
-        if quant_error < 0.0 { quant_error = 0.0; }
+
+        
+
+        let imgx_coords = if imgx != 0 {
+            [imgx + 1, imgx - 1, imgx, imgx + 1]
+        } else {
+            [imgx + 1, imgx, imgx + 1, 0]
+        };
+        let imgy_coords = if imgx != 0 {
+            [imgy, imgy + 1, imgy + 1, imgy + 1]
+        } else {
+            [imgy, imgy + 1, imgy + 1, 0]
+        };
+        
         // Error diffusion
-        error_diffusion(&mut buffer, imgx + 1, imgy, quant_error * 0.4375);
-        if imgx != 0 {
-            error_diffusion(&mut buffer, imgx - 1, imgy + 1, quant_error * 0.1875);
-        }
-        error_diffusion(&mut buffer, imgx, imgy + 1, quant_error * 0.3125);
-        error_diffusion(&mut buffer, imgx + 1, imgy + 1, quant_error * 0.0625);
+        error_diffusion(&mut buffer, imgx_coords, imgy_coords, quant_error);
 
     };
 

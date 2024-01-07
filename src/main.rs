@@ -11,7 +11,7 @@ fn main() {
         Some(string) => string,
         None => ""
     };
-    let mut name = "out.png";
+    let mut name = "./test/result/out.png";
 
     match image::open(&args[1]) {
         Result::Ok(image) => img = image,
