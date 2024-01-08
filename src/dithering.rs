@@ -49,15 +49,61 @@ fn error_diffusion(
     }
 }
 
+
+fn absolute(num_1: isize, num_2: isize) -> usize {
+
+    let mut value = num_1 - num_2;
+
+    if value < 0 {
+        value = value -1;
+    }
+
+    value as usize
+}
+
+// Run a binary search to find the closest palate colour available
+fn find_nearest_palate_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
+    
+    let mut smallest_difference = 255;
+    let mut colour_to_use = 0;
+    for colour in colours {
+
+        let current_difference = absolute(greyscale_color as isize, colour.clone() as isize);
+        
+        if current_difference < smallest_difference {
+            smallest_difference = current_difference;
+            colour_to_use = colour.clone();
+        };
+
+    }
+
+    colour_to_use
+}
+
 // Floyd-Steinberg dithering!
-pub fn floyd_steinberg(img: &DynamicImage) -> ImageBuffer<Luma<u8>, Vec<u8>> {
+pub fn floyd_steinberg(img: &DynamicImage, num_of_colours: usize) -> ImageBuffer<Luma<u8>, Vec<u8>> {
     let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
     let mut quant_error: f32;
+
+    // Create the palate
+    let mut available_colours = vec![0];
+    let colour_step_size: usize = 255 / (num_of_colours - 1);
+    let mut i: usize = 1;
+
+    while i < num_of_colours {
+        available_colours.push((colour_step_size * i) as u8);
+
+        i += 1;
+    }
+
+    println!("{}", colour_step_size);
+    println!("{:?}", available_colours);
+
 
     // Iterate over the pixels
     for (imgx, imgy, _) in img.pixels() {
         let old_pixel = buffer.get_pixel(imgx, imgy)[0];
-        let new_pixel = if old_pixel > 127 { 255 } else { 0 };
+        let new_pixel = find_nearest_palate_colour(old_pixel, &available_colours);
 
         buffer.put_pixel(imgx, imgy, Luma([new_pixel]));
         quant_error = old_pixel as f32 - new_pixel as f32;

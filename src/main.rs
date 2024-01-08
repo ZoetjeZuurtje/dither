@@ -7,8 +7,6 @@ use image::DynamicImage;
 fn main() {
 
     let settings = get_options();
-    println!("{:#?}", settings.file_path_in);
-    println!("{:#?}", settings.file_path_out);
 
     let img: DynamicImage;
 
@@ -19,7 +17,7 @@ fn main() {
         }
     };
     
-    let buffer = dithering::floyd_steinberg(&img);
+    let buffer = dithering::floyd_steinberg(&img, 2);
 
     buffer.save(settings.file_path_out).unwrap();
 }

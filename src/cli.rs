@@ -9,20 +9,18 @@ pub fn get_options() -> Settings {
     let args: Vec<String> = std::env::args().collect();
 
     let mut options: Settings = Settings {
-        file_path_in: "".to_string(),
-        file_path_out: "out.jpg".to_string(),
-        //replace: false,
+        file_path_in: String::new(),
+        file_path_out: String::new(),
     };
 
     options.file_path_in = args[1].clone();
+    options.file_path_out = format!("{}", args[1].clone());
 
-    if args[2].contains("r") {
-        options.file_path_out = options.file_path_in.clone();
-        //options.replace = true;
-    }
+    if args.len() >= 4 {
 
-    if args[2].contains("o") && !args[2].contains("r") {
-        options.file_path_out = args[3].clone();
+        if args[2].contains("o") {
+            options.file_path_out = args[3].clone();
+        }
     }
     
     options
