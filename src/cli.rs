@@ -7,16 +7,21 @@ pub struct Settings {
 
 pub fn get_options() -> Settings {
     let args: Vec<String> = std::env::args().collect();
+    let args_len = args.len();
 
     let mut options: Settings = Settings {
         file_path_in: String::new(),
         file_path_out: String::new(),
     };
 
+    if args_len < 2 {
+        panic!("No arguments supplied. Please supply at least one argument.");
+    }
+
     options.file_path_in = args[1].clone();
     options.file_path_out = format!("{}", args[1].clone());
 
-    if args.len() >= 4 {
+    if args_len >= 4 {
 
         if args[2].contains("o") {
             options.file_path_out = args[3].clone();
