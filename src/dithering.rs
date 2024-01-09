@@ -50,7 +50,7 @@ fn error_diffusion(
 }
 
 
-fn absolute(num_1: &u8, num_2: &u8) -> u8 {
+fn subtract_absolute(num_1: &u8, num_2: &u8) -> u8 {
 
     if num_1 < num_2 {
         return num_2 - num_1;
@@ -66,7 +66,7 @@ fn find_nearest_palate_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
     let mut colour_to_use = 0;
     for colour in colours {
 
-        let current_difference = absolute(&greyscale_color, colour);
+        let current_difference = subtract_absolute(&greyscale_color, colour);
         
         if current_difference < smallest_difference {
             smallest_difference = current_difference;
