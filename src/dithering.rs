@@ -50,15 +50,13 @@ fn error_diffusion(
 }
 
 
-fn absolute(num_1: isize, num_2: isize) -> usize {
+fn absolute(num_1: &u8, num_2: &u8) -> u8 {
 
-    let mut value = num_1 - num_2;
-
-    if value < 0 {
-        value = value -1;
+    if num_1 < num_2 {
+        return num_2 - num_1;
     }
 
-    value as usize
+    num_1 - num_2
 }
 
 // Run a binary search to find the closest palate colour available
@@ -68,7 +66,7 @@ fn find_nearest_palate_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
     let mut colour_to_use = 0;
     for colour in colours {
 
-        let current_difference = absolute(greyscale_color as isize, colour.clone() as isize);
+        let current_difference = absolute(&greyscale_color, colour);
         
         if current_difference < smallest_difference {
             smallest_difference = current_difference;
