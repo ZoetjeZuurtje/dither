@@ -63,19 +63,19 @@ fn subtract_absolute(num_1: &u8, num_2: &u8) -> u8 {
 fn find_nearest_palate_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
     
     let mut smallest_difference = 255;
-    let mut colour_to_use = 0;
+    let mut colour_to_use: &u8 = &0;
     for colour in colours {
 
         let current_difference = subtract_absolute(&greyscale_color, colour);
         
         if current_difference < smallest_difference {
             smallest_difference = current_difference;
-            colour_to_use = colour.clone();
+            colour_to_use = colour;
         };
 
     }
 
-    colour_to_use
+    colour_to_use.clone()
 }
 
 // Floyd-Steinberg dithering!
