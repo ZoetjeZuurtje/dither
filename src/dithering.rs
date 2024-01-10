@@ -49,18 +49,18 @@ fn error_diffusion(
     }
 }
 
+// equivalent to `abs(a - b)`, but prevents integer underflows
+fn subtract_absolute(a: &u8, b: &u8) -> u8 {
 
-fn subtract_absolute(num_1: &u8, num_2: &u8) -> u8 {
-
-    if num_1 < num_2 {
-        return num_2 - num_1;
+    if a < b {
+        return b - a;
     }
 
-    num_1 - num_2
+    a - b
 }
 
-// Run a binary search to find the closest palate colour available
-fn find_nearest_palate_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
+// Run a binary search to find the closest palatte colour available
+fn find_nearest_palatte_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
     
     let mut smallest_difference = 255;
     let mut colour_to_use: &u8 = &0;
@@ -78,35 +78,39 @@ fn find_nearest_palate_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
     colour_to_use.clone()
 }
 
-// Floyd-Steinberg dithering!
-pub fn floyd_steinberg(img: &DynamicImage, num_of_colours: usize) -> ImageBuffer<Luma<u8>, Vec<u8>> {
-    let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
-    let mut quant_error: f32;
+// Creates a palatte with the chosen number of shades
+// Shades are spread evenly
+fn create_palatte_grey(shades: usize) -> Vec<u8> {
 
-    // Create the palate
-    let mut available_colours = vec![0];
-    let colour_step_size: usize = 255 / (num_of_colours - 1);
+    let mut palatte = vec![0];
+    let colour_step_size: usize = 255 / (shades - 1);
     let mut i: usize = 1;
 
-    while i < num_of_colours {
-        available_colours.push((colour_step_size * i) as u8);
+    while i < shades {
+        palatte.push((colour_step_size * i) as u8);
 
         i += 1;
     }
 
-    println!("{}", colour_step_size);
-    println!("{:?}", available_colours);
+    palatte
+}
 
+// Floyd-Steinberg dithering!
+pub fn floyd_steinberg(img: &DynamicImage, num_of_colours: usize) -> ImageBuffer<Luma<u8>, Vec<u8>> {
+    let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
+
+    let available_colours = create_palatte_grey(num_of_colours);
 
     // Iterate over the pixels
     for (imgx, imgy, _) in img.pixels() {
         let old_pixel = buffer.get_pixel(imgx, imgy)[0];
-        let new_pixel = find_nearest_palate_colour(old_pixel, &available_colours);
+        let new_pixel = find_nearest_palatte_colour(old_pixel, &available_colours);
 
         buffer.put_pixel(imgx, imgy, Luma([new_pixel]));
-        quant_error = old_pixel as f32 - new_pixel as f32;
+        let quant_error = old_pixel as f32 - new_pixel as f32;
 
         // Error diffusion
+        // Ugly `if` statement is needed to prevent integer underflows
         if imgx == 0 {
 
             let rel_x_coords = vec![imgx + 1, imgx, imgx + 1];

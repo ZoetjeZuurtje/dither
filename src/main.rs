@@ -1,23 +1,30 @@
 mod dithering;
 mod cli;
-use cli::get_options;
-use image::DynamicImage;
-
+use cli::Config;
+use std::process;
+use std::error::Error;
 
 fn main() {
 
-    let settings = get_options();
+    let args: Vec<String> = std::env::args().collect();
+    let config = cli::Config::new(&args).unwrap_or_else(|err | {
+        println!("Config error: {}", err);
+        process::exit(1);
+    });
 
-    let img: DynamicImage;
+    if let Err(e) = run(config) {
+        println!("Application error: {}", e);
+        process::exit(1);
+    }
+}
 
-    match image::open(settings.file_path_in) {
-        Result::Ok(image) => img = image,
-        Result::Err(_) => {
-            panic!("\nCould not open file.\nCheck if the file path is correct and if you have the appropriate priviliges.");
-        }
-    };
+fn run(config: Config) -> Result<(), Box<dyn Error>> {
+
+    let img = image::open(config.file_name)?;
     
     let buffer = dithering::floyd_steinberg(&img, 2);
 
-    buffer.save(settings.file_path_out).unwrap();
+    buffer.save(config.output)?;
+
+    Ok(())
 }
