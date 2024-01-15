@@ -22,7 +22,7 @@ fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     let img = image::open(config.file_name)?;
     
-    let buffer = dithering::floyd_steinberg(&img, 2);
+    let buffer = dithering::floyd_steinberg(&img, config.shades);
 
     buffer.save(config.output)?;
 

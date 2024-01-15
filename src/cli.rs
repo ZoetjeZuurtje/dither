@@ -1,7 +1,7 @@
 pub struct Config {
     pub file_name: String,      // the file path of the image to convert
     pub output: String,         // the file path of the image created
-    pub shades: u8,            // int ranging from 0 to 255, adjusts the amount of shades in the palatte. Default is 2.
+    pub shades: usize,            // int ranging from 0 to 255, adjusts the amount of shades in the palatte. Default is 2.
     //replace: bool,              // a bool storing whether or not the image replaces the old image.
 }
 
@@ -19,7 +19,7 @@ impl Config {
     
         let file_name = args[1].clone();
         let mut output = format!("{}", args[1].clone());
-        let mut shades: u8 = 2;
+        let mut shades: usize = 2;
     
         if args_len >= 3 {
             output = args[2].clone();
@@ -27,8 +27,19 @@ impl Config {
 
         if args_len >= 4 {
             match args[3].parse() {
-                Ok(value) => shades = value,
-                Err(_) => return Err("could not parse the number of shades")
+                // values lower than 2 cause crashes, 2 is already set as default
+                Ok(value) => {
+                    if value > 2 {
+                        shades = value
+                    } else {
+                        println!("Warning: number of shades cannot be lower than 2");
+                        println!("Continuing with default: 2");
+                    }
+                }, 
+                Err(_) => {
+                    println!("Warning: cannot parse the number of shades");
+                    println!("Continuing with default: 2");
+                }
             };
         }
         
