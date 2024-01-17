@@ -18,12 +18,8 @@ impl Config {
         }
     
         let file_name = args[1].clone();
-        let mut output = format!("{}", args[1].clone());
+        let output = if args_len >=3 { args[2].clone() } else { args[1].clone() };
         let mut shades: usize = 2;
-    
-        if args_len >= 3 {
-            output = args[2].clone();
-        }
 
         if args_len >= 4 {
             match args[3].parse() {
