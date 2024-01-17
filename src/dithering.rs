@@ -1,5 +1,17 @@
 use image::{DynamicImage, GenericImageView, ImageBuffer, Luma};
 
+fn into_u8(number: i16) -> u8 {
+
+    let unsigned_number: u8 = match number.try_into() {
+        Ok(number) => number,
+        Err(_) => {
+            if number > 255 { 255 } else { 0 }
+        },
+    };
+
+    unsigned_number
+}
+
 fn calculate_err(error_value: f32, weight: usize) -> i16 {
     // Approximations for:
     //   .     *   7/16
@@ -17,7 +29,6 @@ fn error_diffusion(
     y: Vec<u32>,
     err: f32,
 ) {
-    let mut adjusted_pixel_value;
     let mut i: usize = 0;
     while i < x.len() {
         if i == 3 && x[i] == 0 {
@@ -35,13 +46,7 @@ fn error_diffusion(
 
         let weighted_err = calculate_err(err, i);
 
-        adjusted_pixel_value = weighted_err + pixel as i16;
-
-        if adjusted_pixel_value > 255 {
-            adjusted_pixel_value = 255;
-        } else if adjusted_pixel_value < 0 {
-            adjusted_pixel_value = 0;
-        };
+        let adjusted_pixel_value = into_u8(weighted_err + pixel as i16);
 
         buffer.put_pixel(x[i], y[i], Luma([adjusted_pixel_value as u8]));
 
