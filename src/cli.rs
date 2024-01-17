@@ -29,7 +29,7 @@ impl Config {
             match args[3].parse() {
                 // values lower than 2 cause crashes, 2 is already set as default
                 Ok(value) => {
-                    if value > 2 {
+                    if value > 1 {
                         shades = value
                     } else {
                         println!("Warning: number of shades cannot be lower than 2");
