@@ -49,7 +49,7 @@ fn error_diffusion(
     }
 }
 
-// equivalent to `abs(a - b)`, but prevents integer underflows
+// equivalent to `abs(a - b)`, but prevents an integer underflow from occurring
 fn subtract_absolute(a: &u8, b: &u8) -> u8 {
 
     if a < b {
@@ -59,7 +59,7 @@ fn subtract_absolute(a: &u8, b: &u8) -> u8 {
     a - b
 }
 
-// Run a binary search to find the closest palatte colour available
+
 fn find_nearest_palatte_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
     
     let mut smallest_difference = 255;
@@ -78,7 +78,7 @@ fn find_nearest_palatte_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
     colour_to_use.clone()
 }
 
-// Creates a palatte with the chosen number of shades
+
 // Shades are spread evenly
 fn create_palatte_grey(shades: usize) -> Vec<u8> {
 
@@ -95,7 +95,7 @@ fn create_palatte_grey(shades: usize) -> Vec<u8> {
     palatte
 }
 
-// Floyd-Steinberg dithering!
+
 pub fn floyd_steinberg(img: &DynamicImage, num_of_colours: usize) -> ImageBuffer<Luma<u8>, Vec<u8>> {
     let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
 
@@ -110,27 +110,27 @@ pub fn floyd_steinberg(img: &DynamicImage, num_of_colours: usize) -> ImageBuffer
         let quant_error = old_pixel as f32 - new_pixel as f32;
 
         // Error diffusion
-        // Ugly `if` statement is needed to prevent integer underflows
+        // Ugly `if` statement is needed to prevent an integer underflow
         if imgx == 0 {
 
-            let rel_x_coords = vec![imgx + 1, imgx, imgx + 1];
-            let rel_y_coords = vec![imgx + 1, imgx, imgx + 1];
+            let relative_x_coords = vec![imgx + 1, imgx, imgx + 1];
+            let relative_y_coords = vec![imgx + 1, imgx, imgx + 1];
 
             error_diffusion(
                 &mut buffer,
-                rel_x_coords,
-                rel_y_coords,
+                relative_x_coords,
+                relative_y_coords,
                 quant_error,
             );
             continue;
         };
 
-        let rel_x_coords = vec![imgx + 1, imgx - 1, imgx, imgx + 1];
-        let rel_y_coords = vec![imgy, imgy + 1, imgy + 1, imgy + 1];
+        let relative_x_coords = vec![imgx + 1, imgx - 1, imgx, imgx + 1];
+        let relative_y_coords = vec![imgy, imgy + 1, imgy + 1, imgy + 1];
         error_diffusion(
             &mut buffer,
-            rel_x_coords,
-            rel_y_coords,
+            relative_x_coords,
+            relative_y_coords,
             quant_error,
         );
     }
