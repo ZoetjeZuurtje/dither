@@ -65,22 +65,22 @@ fn subtract_absolute(a: &u8, b: &u8) -> u8 {
 }
 
 
-fn find_nearest_palatte_colour(greyscale_color: u8, colours: &Vec<u8>) -> u8 {
+fn find_nearest_palatte_color(greyscale_color: u8, colors: &Vec<u8>) -> u8 {
     
     let mut smallest_difference = 255;
-    let mut colour_to_use: &u8 = &0;
-    for colour in colours {
+    let mut color_to_use: &u8 = &0;
+    for color in colors {
 
-        let current_difference = subtract_absolute(&greyscale_color, colour);
+        let current_difference = subtract_absolute(&greyscale_color, color);
         
         if current_difference < smallest_difference {
             smallest_difference = current_difference;
-            colour_to_use = colour;
+            color_to_use = color;
         };
 
     }
 
-    colour_to_use.clone()
+    *color_to_use
 }
 
 
@@ -101,15 +101,15 @@ fn create_palatte_grey(shades: usize) -> Vec<u8> {
 }
 
 
-pub fn floyd_steinberg(img: &DynamicImage, num_of_colours: usize) -> ImageBuffer<Luma<u8>, Vec<u8>> {
+pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: usize) -> ImageBuffer<Luma<u8>, Vec<u8>> {
     let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
 
-    let available_colours = create_palatte_grey(num_of_colours);
+    let available_colors = create_palatte_grey(num_of_colors);
 
     // Iterate over the pixels
     for (imgx, imgy, _) in img.pixels() {
         let old_pixel = buffer.get_pixel(imgx, imgy)[0];
-        let new_pixel = find_nearest_palatte_colour(old_pixel, &available_colours);
+        let new_pixel = find_nearest_palatte_color(old_pixel, &available_colors);
 
         buffer.put_pixel(imgx, imgy, Luma([new_pixel]));
         let quant_error = old_pixel as f32 - new_pixel as f32;
