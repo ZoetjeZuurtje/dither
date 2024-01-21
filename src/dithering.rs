@@ -28,7 +28,7 @@ fn error_diffusion(
     buffer: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
     x: Vec<u32>,
     y: Vec<u32>,
-    err: f32,
+    err: [i32; 3],
 ) {
     let mut i: usize = 0;
     while i < x.len() {
@@ -37,19 +37,25 @@ fn error_diffusion(
             continue;
         }
 
-        let pixel = match buffer.get_pixel_checked(x[i], y[i]) {
-            Some(pixel) => pixel,
+        let mut pixel = match buffer.get_pixel_checked(x[i], y[i]) {
+            Some(pixel) => *pixel,
             None => {
                 i += 1;
                 continue;
             }
         };
 
-        let weighted_err = calculate_err(err, i);
+        let mut color_index = 0;
 
-        let adjusted_pixel_value = into_u8(weighted_err + pixel[0] as i16);
+        while color_index < 3 {
+            let weighted_err = calculate_err(err[color_index] as f32, i);
+            let adjusted_color_value = into_u8(weighted_err + pixel[color_index] as i16);
+            pixel[color_index] = adjusted_color_value;
 
-        buffer.put_pixel(x[i], y[i], Rgb([adjusted_pixel_value, adjusted_pixel_value, adjusted_pixel_value]));
+            color_index += 1;
+        }
+
+        buffer.put_pixel(x[i], y[i], pixel);
 
         i += 1;
     }
@@ -88,17 +94,13 @@ fn calculate_difference(start: &Rgb<u8>, end: &Rgb<u8>) -> u32 {
     ) as u32
 }
 
-fn calculate_error(old_pixel: &Rgb<u8>, new_pixel: &Rgb<u8>) -> f32 {
+fn calculate_error(old_pixel: Rgb<u8>, new_pixel: Rgb<u8>) -> [i32; 3] {
 
-    let red_difference  : i32 = old_pixel[0] as i32 - new_pixel[0] as i32;
-    let green_difference: i32 = old_pixel[1] as i32 - new_pixel[1] as i32;
-    let blue_difference : i32 = old_pixel[2] as i32 - new_pixel[2] as i32;
+    let red_error  : i32 = old_pixel[0] as i32 - new_pixel[0] as i32;
+    let green_error: i32 = old_pixel[1] as i32 - new_pixel[1] as i32;
+    let blue_error : i32 = old_pixel[2] as i32 - new_pixel[2] as i32;
 
-    calculate_euclidean_distance(
-        red_difference, 
-        green_difference, 
-        blue_difference
-    )
+    [red_error, green_error, blue_error]
 }
 
 
@@ -117,7 +119,6 @@ fn find_nearest_palette_color(pixel_color: &Rgb<u8>, palette: &Vec<Rgb<u8>>) -> 
 
     *palette_color
 }
-
 
 // Shades are spread evenly
 fn create_palette(num_of_colors: usize) -> Vec<Rgb<u8>> {
@@ -149,7 +150,7 @@ pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: usize) -> ImageBuffer<
         let new_pixel = find_nearest_palette_color(&old_pixel, &available_colors);
 
         buffer.put_pixel(imgx, imgy, new_pixel);
-        let quant_error = calculate_error(&old_pixel, &new_pixel);
+        let quant_error = calculate_error(old_pixel, new_pixel);
         
         // Error diffusion
         // Ugly `if` statement is needed to prevent an integer underflow
