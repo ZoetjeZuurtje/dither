@@ -1,4 +1,5 @@
-use image::{DynamicImage, GenericImageView, ImageBuffer, Luma};
+use image::{DynamicImage, GenericImageView, ImageBuffer, Rgb};
+
 
 fn into_u8(number: i16) -> u8 {
 
@@ -24,7 +25,7 @@ fn calculate_err(error_value: f32, weight: usize) -> i16 {
 }
 
 fn error_diffusion(
-    buffer: &mut ImageBuffer<Luma<u8>, Vec<u8>>,
+    buffer: &mut ImageBuffer<Rgb<u8>, Vec<u8>>,
     x: Vec<u32>,
     y: Vec<u32>,
     err: f32,
@@ -37,7 +38,7 @@ fn error_diffusion(
         }
 
         let pixel = match buffer.get_pixel_checked(x[i], y[i]) {
-            Some(pixel) => pixel[0],
+            Some(pixel) => pixel,
             None => {
                 i += 1;
                 continue;
@@ -46,74 +47,110 @@ fn error_diffusion(
 
         let weighted_err = calculate_err(err, i);
 
-        let adjusted_pixel_value = into_u8(weighted_err + pixel as i16);
+        let adjusted_pixel_value = into_u8(weighted_err + pixel[0] as i16);
 
-        buffer.put_pixel(x[i], y[i], Luma([adjusted_pixel_value as u8]));
+        buffer.put_pixel(x[i], y[i], Rgb([adjusted_pixel_value, adjusted_pixel_value, adjusted_pixel_value]));
 
         i += 1;
     }
 }
 
-// equivalent to `abs(a - b)`, but prevents an integer underflow from occurring
-fn subtract_absolute(a: &u8, b: &u8) -> u8 {
-
-    if a < b {
+// Used to prevent an integer underflow from occurring.
+fn subtract_absolute(a: u8, b: u8) -> u8 {
+    if b > a {
         return b - a;
     }
-
     a - b
 }
 
+fn calculate_euclidean_distance(x_distance: i32, y_distance: i32, z_distance: i32) -> f32 {
 
-fn find_nearest_palatte_color(greyscale_color: u8, colors: &Vec<u8>) -> u8 {
-    
-    let mut smallest_difference = 255;
-    let mut color_to_use: &u8 = &0;
-    for color in colors {
+    let difference_to_sqrt = (
+        x_distance.pow(2) +
+        y_distance.pow(2) +
+        z_distance.pow(2)
+    ) as f32;
 
-        let current_difference = subtract_absolute(&greyscale_color, color);
-        
-        if current_difference < smallest_difference {
-            smallest_difference = current_difference;
-            color_to_use = color;
-        };
+    difference_to_sqrt.sqrt()
+}
 
+// Uses Euclidean distance, approximately
+fn calculate_difference(start: &Rgb<u8>, end: &Rgb<u8>) -> u32 {
+
+    let red_difference  : i32 = subtract_absolute(start[0], end[0]).into();
+    let green_difference: i32 = subtract_absolute(start[1], end[1]).into();
+    let blue_difference : i32 = subtract_absolute(start[2], end[2]).into();
+
+    calculate_euclidean_distance(
+        red_difference, 
+        green_difference, 
+        blue_difference
+    ) as u32
+}
+
+fn calculate_error(old_pixel: &Rgb<u8>, new_pixel: &Rgb<u8>) -> f32 {
+
+    let red_difference  : i32 = old_pixel[0] as i32 - new_pixel[0] as i32;
+    let green_difference: i32 = old_pixel[1] as i32 - new_pixel[1] as i32;
+    let blue_difference : i32 = old_pixel[2] as i32 - new_pixel[2] as i32;
+
+    calculate_euclidean_distance(
+        red_difference, 
+        green_difference, 
+        blue_difference
+    )
+}
+
+
+fn find_nearest_palette_color(pixel_color: &Rgb<u8>, palette: &Vec<Rgb<u8>>) -> Rgb<u8> {
+
+    let mut palette_color: &Rgb<u8> = &Rgb([0,0,0]);
+    let mut smallest_difference = 1000;
+
+    for color in palette {
+        let distance = calculate_difference(&pixel_color, color);
+        if distance < smallest_difference {
+            smallest_difference = distance;
+            palette_color = color;
+        }
     }
 
-    *color_to_use
+    *palette_color
 }
 
 
 // Shades are spread evenly
-fn create_palatte_grey(shades: usize) -> Vec<u8> {
+fn create_palette(num_of_colors: usize) -> Vec<Rgb<u8>> {
 
-    let mut palatte = vec![0];
-    let colour_step_size: usize = 255 / (shades - 1);
+    let color_step_size: usize = 255 / (num_of_colors - 1);
+    let black: Rgb<u8> = Rgb([0, 0, 0]);
+    let mut palette = vec![black];
+
     let mut i: usize = 1;
-
-    while i < shades {
-        palatte.push((colour_step_size * i) as u8);
+    while i < num_of_colors {
+        let shade = (color_step_size * i) as u8;
+        palette.push(Rgb([shade, shade, shade]));
 
         i += 1;
     }
-
-    palatte
+    
+    palette
 }
 
 
-pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: usize) -> ImageBuffer<Luma<u8>, Vec<u8>> {
-    let mut buffer: ImageBuffer<Luma<u8>, Vec<u8>> = img.to_luma8();
-
-    let available_colors = create_palatte_grey(num_of_colors);
+pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: usize) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+    let mut buffer = img.to_rgb8();
+    let available_colors = create_palette(num_of_colors);
+    println!("{:?}", available_colors);
 
     // Iterate over the pixels
     for (imgx, imgy, _) in img.pixels() {
-        let old_pixel = buffer.get_pixel(imgx, imgy)[0];
-        let new_pixel = find_nearest_palatte_color(old_pixel, &available_colors);
+        let old_pixel = *(buffer.get_pixel(imgx, imgy));
+        let new_pixel = find_nearest_palette_color(&old_pixel, &available_colors);
 
-        buffer.put_pixel(imgx, imgy, Luma([new_pixel]));
-        let quant_error = old_pixel as f32 - new_pixel as f32;
-
+        buffer.put_pixel(imgx, imgy, new_pixel);
+        let quant_error = calculate_error(&old_pixel, &new_pixel);
+        
         // Error diffusion
         // Ugly `if` statement is needed to prevent an integer underflow
         if imgx == 0 {
