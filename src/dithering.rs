@@ -120,26 +120,39 @@ fn find_nearest_palette_color(pixel_color: &Rgb<u8>, palette: &Vec<Rgb<u8>>) -> 
     *palette_color
 }
 
-// Shades are spread evenly
-fn create_palette(num_of_colors: usize) -> Vec<Rgb<u8>> {
+// num_of_colors is shades per channel. 
+fn create_palette(num_of_colors: u8) -> Vec<Rgb<u8>> {
 
-    let color_step_size: usize = 255 / (num_of_colors - 1);
+    let color_step_size: u8 = 255 / (num_of_colors - 1);
     let black: Rgb<u8> = Rgb([0, 0, 0]);
-    let mut palette = vec![black];
 
-    let mut i: usize = 1;
+    let mut temporary_palette = vec![];
+
+    let mut i: u8 = 1;
     while i < num_of_colors {
         let shade = (color_step_size * i) as u8;
-        palette.push(Rgb([shade, shade, shade]));
+        temporary_palette.push(shade);
 
         i += 1;
     }
     
+    let mut palette = vec![black];
+
+    for red in &temporary_palette {
+
+        for green in &temporary_palette {
+
+            for blue in &temporary_palette {
+                palette.push(Rgb([*red, *green, *blue]));
+            }
+        }
+    }
+    // do magic
     palette
 }
 
 
-pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: usize) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: u8) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
     let mut buffer = img.to_rgb8();
     let available_colors = create_palette(num_of_colors);
     println!("{:?}", available_colors);

@@ -1,7 +1,7 @@
 pub struct Config {
     pub file_name: String,      // the file path of the image to convert
     pub output: String,         // the file path of the image created
-    pub shades: usize,            // int ranging from 0 to 255, adjusts the amount of shades in the palatte. Default is 2.
+    pub shades: u8,            // int ranging from 0 to 255, adjusts the amount of shades in the palatte. Default is 2.
     //replace: bool,              // a bool storing whether or not the image replaces the old image.
 }
 
@@ -19,7 +19,7 @@ impl Config {
     
         let file_name = args[1].clone();
         let output = if args_len >=3 { args[2].clone() } else { args[1].clone() };
-        let mut shades: usize = 2;
+        let mut shades = 2;
 
         if args_len >= 4 {
             match args[3].parse() {
