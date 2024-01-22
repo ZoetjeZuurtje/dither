@@ -1,7 +1,7 @@
 pub struct Config {
     pub file_name: String,      // the file path of the image to convert
     pub output: String,         // the file path of the image created
-    pub shades: u8,            // int ranging from 0 to 255, adjusts the amount of shades in the palatte. Default is 2.
+    pub shades: u8,            // int ranging from 0 to 255, adjusts the amount of shades in the palette. Default is 2.
     //replace: bool,              // a bool storing whether or not the image replaces the old image.
 }
 

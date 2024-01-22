@@ -13,7 +13,7 @@ fn into_u8(number: i16) -> u8 {
     unsigned_number
 }
 
-fn calculate_err(error_value: f32, weight: usize) -> i16 {
+fn weigh_err(error_value: f32, weight: usize) -> i16 {
     // Approximations for:
     //   .     *   7/16
     // 3/16  5/16  1/16
@@ -48,7 +48,7 @@ fn error_diffusion(
         let mut color_index = 0;
 
         while color_index < 3 {
-            let weighted_err = calculate_err(err[color_index] as f32, i);
+            let weighted_err = weigh_err(err[color_index] as f32, i);
             let adjusted_color_value = into_u8(weighted_err + pixel[color_index] as i16);
             pixel[color_index] = adjusted_color_value;
 
@@ -61,11 +61,10 @@ fn error_diffusion(
     }
 }
 
-// Used to prevent an integer underflow from occurring.
+// Used to prevent an integer underflow from occurring, without having to change the type of the variable
 fn subtract_absolute(a: u8, b: u8) -> u8 {
-    if b > a {
-        return b - a;
-    }
+    if a < b { return b - a }
+
     a - b
 }
 
@@ -80,7 +79,6 @@ fn calculate_euclidean_distance(x_distance: i32, y_distance: i32, z_distance: i3
     difference_to_sqrt.sqrt()
 }
 
-// Uses Euclidean distance, approximately
 fn calculate_difference(start: &Rgb<u8>, end: &Rgb<u8>) -> u32 {
 
     let red_difference  : i32 = subtract_absolute(start[0], end[0]).into();
@@ -103,7 +101,7 @@ fn calculate_error(old_pixel: Rgb<u8>, new_pixel: Rgb<u8>) -> [i32; 3] {
     [red_error, green_error, blue_error]
 }
 
-
+// Does a nearest-neighbor search
 fn find_nearest_palette_color(pixel_color: &Rgb<u8>, palette: &Vec<Rgb<u8>>) -> Rgb<u8> {
 
     let mut palette_color: &Rgb<u8> = &Rgb([0,0,0]);
@@ -147,7 +145,7 @@ fn create_palette(num_of_colors: u8) -> Vec<Rgb<u8>> {
             }
         }
     }
-    // do magic
+    
     palette
 }
 
@@ -158,19 +156,19 @@ pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: u8) -> ImageBuffer<Rgb
     println!("{:?}", available_colors);
 
     // Iterate over the pixels
-    for (imgx, imgy, _) in img.pixels() {
-        let old_pixel = *(buffer.get_pixel(imgx, imgy));
+    for (image_x, image_y, _) in img.pixels() {
+        let old_pixel = *(buffer.get_pixel(image_x, image_y));
         let new_pixel = find_nearest_palette_color(&old_pixel, &available_colors);
 
-        buffer.put_pixel(imgx, imgy, new_pixel);
+        buffer.put_pixel(image_x, image_y, new_pixel);
         let quant_error = calculate_error(old_pixel, new_pixel);
         
         // Error diffusion
         // Ugly `if` statement is needed to prevent an integer underflow
-        if imgx == 0 {
+        if image_x == 0 {
 
-            let relative_x_coords = vec![imgx + 1, imgx, imgx + 1];
-            let relative_y_coords = vec![imgx + 1, imgx, imgx + 1];
+            let relative_x_coords = vec![image_x + 1, image_x, image_x + 1];
+            let relative_y_coords = vec![image_x + 1, image_x, image_x + 1];
 
             error_diffusion(
                 &mut buffer,
@@ -181,8 +179,8 @@ pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: u8) -> ImageBuffer<Rgb
             continue;
         };
 
-        let relative_x_coords = vec![imgx + 1, imgx - 1, imgx, imgx + 1];
-        let relative_y_coords = vec![imgy, imgy + 1, imgy + 1, imgy + 1];
+        let relative_x_coords = vec![image_x + 1, image_x - 1, image_x, image_x + 1];
+        let relative_y_coords = vec![image_y, image_y + 1, image_y + 1, image_y + 1];
         error_diffusion(
             &mut buffer,
             relative_x_coords,
