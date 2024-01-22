@@ -124,9 +124,9 @@ fn find_nearest_palette_color(pixel_color: &Rgb<u8>, palette: &Vec<Rgb<u8>>) -> 
 fn create_palette(num_of_colors: u8) -> Vec<Rgb<u8>> {
 
     let color_step_size: u8 = 255 / (num_of_colors - 1);
-    let black: Rgb<u8> = Rgb([0, 0, 0]);
+    let black: u8 = 0;
 
-    let mut temporary_palette = vec![];
+    let mut temporary_palette = vec![black];
 
     let mut i: u8 = 1;
     while i < num_of_colors {
@@ -136,7 +136,7 @@ fn create_palette(num_of_colors: u8) -> Vec<Rgb<u8>> {
         i += 1;
     }
     
-    let mut palette = vec![black];
+    let mut palette = vec![];
 
     for red in &temporary_palette {
 
