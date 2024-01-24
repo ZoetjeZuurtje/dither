@@ -1,8 +1,10 @@
+use std::process;
+
 pub struct Config {
     pub file_name: String,      // the file path of the image to convert
     pub output: String,         // the file path of the image created
-    pub shades: u8,            // int ranging from 0 to 255, adjusts the amount of shades in the palette. Default is 2.
-    //replace: bool,              // a bool storing whether or not the image replaces the old image.
+    pub shades: u8,             // int ranging from 0 to 255, adjusts the amount of shades in the palette. Default is 2.
+    pub color: bool,            // whether or not the output should be in color. `false` will produce black-and-white pictures.
 }
 
 
@@ -20,9 +22,18 @@ impl Config {
         let file_name = args[1].clone();
         let output = if args_len >=3 { args[2].clone() } else { args[1].clone() };
         let mut shades = 2;
+        let mut color = true;
 
-        if args_len >= 4 {
-            match args[3].parse() {
+        for arg in args {
+            if arg == "--nocolor" {
+                color = false;
+                continue;
+            };
+            if arg == "--help" {
+                println!( "Usage:\n\tdither [FILEPATH_INPUT] [FILEPATH_OUTPUT] [OPTION...]\n\n\tOptions are separated by spaces.\n\nOptions:\n\t--help\t\t\tShow this menu\n\t--nocolor\t\tOnly use greys for the palette\n\t[number]\t\tAmount of shades to use for Red, Green, and Blue color channels");
+                process::exit(0);
+            };
+            match arg.parse() {
                 // values lower than 2 cause crashes, 2 is already set as default
                 Ok(value) => {
                     if value > 1 {
@@ -31,14 +42,11 @@ impl Config {
                         println!("Warning: number of shades cannot be lower than 2");
                         println!("Continuing with default: 2");
                     }
-                }, 
-                Err(_) => {
-                    println!("Warning: cannot parse the number of shades");
-                    println!("Continuing with default: 2");
-                }
-            };
+                },
+                Err(_) => {}
+            }
         }
         
-        Ok(Config { file_name, output, shades })
+        Ok(Config { file_name, output, shades, color })
     }
 }

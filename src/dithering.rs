@@ -118,47 +118,14 @@ fn find_nearest_palette_color(pixel_color: &Rgb<u8>, palette: &Vec<Rgb<u8>>) -> 
     *palette_color
 }
 
-// num_of_colors is shades per channel. 
-fn create_palette(num_of_colors: u8) -> Vec<Rgb<u8>> {
 
-    let color_step_size: u8 = 255 / (num_of_colors - 1);
-    let black: u8 = 0;
-
-    let mut temporary_palette = vec![black];
-
-    let mut i: u8 = 1;
-    while i < num_of_colors {
-        let shade = (color_step_size * i) as u8;
-        temporary_palette.push(shade);
-
-        i += 1;
-    }
-    
-    let mut palette = vec![];
-
-    for red in &temporary_palette {
-
-        for green in &temporary_palette {
-
-            for blue in &temporary_palette {
-                palette.push(Rgb([*red, *green, *blue]));
-            }
-        }
-    }
-    
-    palette
-}
-
-
-pub fn floyd_steinberg(img: &DynamicImage, num_of_colors: u8) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
+pub fn floyd_steinberg(img: &DynamicImage, palette: Vec<Rgb<u8>>) -> ImageBuffer<Rgb<u8>, Vec<u8>> {
     let mut buffer = img.to_rgb8();
-    let available_colors = create_palette(num_of_colors);
-    println!("{:?}", available_colors);
-
+    
     // Iterate over the pixels
     for (image_x, image_y, _) in img.pixels() {
         let old_pixel = *(buffer.get_pixel(image_x, image_y));
-        let new_pixel = find_nearest_palette_color(&old_pixel, &available_colors);
+        let new_pixel = find_nearest_palette_color(&old_pixel, &palette);
 
         buffer.put_pixel(image_x, image_y, new_pixel);
         let quant_error = calculate_error(old_pixel, new_pixel);
