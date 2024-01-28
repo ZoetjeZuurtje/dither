@@ -21,7 +21,7 @@ fn weigh_err(error_value: f32, weight: usize) -> i16 {
 
     let weighted_error = error_value * ERR_DIFF[weight];
 
-    return weighted_error.floor() as i16;
+    weighted_error.floor() as i16
 }
 
 fn error_diffusion(
@@ -30,34 +30,21 @@ fn error_diffusion(
     y: Vec<u32>,
     err: [i32; 3],
 ) {
-    let mut i: usize = 0;
-    while i < x.len() {
-        if i == 3 && x[i] == 0 {
-            i += 1;
-            continue;
-        }
+    for i in 0..x.len() {
+        if i == 3 && x[i] == 0 { continue };
 
         let mut pixel = match buffer.get_pixel_checked(x[i], y[i]) {
             Some(pixel) => *pixel,
-            None => {
-                i += 1;
-                continue;
-            }
+            None => { continue }
         };
 
-        let mut color_index = 0;
-
-        while color_index < 3 {
+        for color_index in 0..3 {
             let weighted_err = weigh_err(err[color_index] as f32, i);
-            let adjusted_color_value = into_u8(weighted_err + pixel[color_index] as i16);
-            pixel[color_index] = adjusted_color_value;
-
-            color_index += 1;
+            let new_pixel_value = into_u8(weighted_err + pixel[color_index] as i16);
+            pixel[color_index] = new_pixel_value;
         }
 
         buffer.put_pixel(x[i], y[i], pixel);
-
-        i += 1;
     }
 }
 
@@ -108,7 +95,7 @@ fn find_nearest_palette_color(pixel_color: &Rgb<u8>, palette: &Vec<Rgb<u8>>) -> 
     let mut smallest_difference = 1000;
 
     for color in palette {
-        let distance = calculate_difference(&pixel_color, color);
+        let distance = calculate_difference(pixel_color, color);
         if distance < smallest_difference {
             smallest_difference = distance;
             palette_color = color;

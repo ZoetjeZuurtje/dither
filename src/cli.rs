@@ -33,17 +33,13 @@ impl Config {
                 println!( "Usage:\n\tdither [FILEPATH_INPUT] [FILEPATH_OUTPUT] [OPTION...]\n\n\tOptions are separated by spaces.\n\nOptions:\n\t--help\t\t\tShow this menu\n\t--nocolor\t\tOnly use greys for the palette\n\t[number]\t\tAmount of shades to use for Red, Green, and Blue color channels");
                 process::exit(0);
             };
-            match arg.parse() {
-                // values lower than 2 cause crashes, 2 is already set as default
-                Ok(value) => {
-                    if value > 1 {
-                        shades = value
-                    } else {
-                        println!("Warning: number of shades cannot be lower than 2");
-                        println!("Continuing with default: 2");
-                    }
-                },
-                Err(_) => {}
+            if let Ok(value) = arg.parse() {
+                if value > 2 {
+                    shades = value
+                } else {
+                    println!("Warning: number of shades must be between 2 and 256 (exclusive)");
+                    println!("Continuing with default: 2");
+                }
             }
         }
         
